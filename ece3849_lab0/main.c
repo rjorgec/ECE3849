@@ -20,6 +20,9 @@
 uint32_t gSystemClock; // [Hz] system clock frequency
 volatile uint32_t gTime = 12345; // time in hundredths of a second
 
+tContext sContext;
+
+
 int main(void)
 
 {
@@ -35,7 +38,7 @@ int main(void)
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
     Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
 
-    tContext sContext;
+//    tContext sContext;
     GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
     GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
     ButtonInit();
@@ -53,16 +56,14 @@ int main(void)
         snprintf(str, sizeof(str), "Time = %.2u:%.2u:%.2u", (time/10000) %100, (time/100) %100, time %100); // convert time to string
 
         GrContextForegroundSet(&sContext, ClrYellow); // yellow text
+
         GrStringDraw(&sContext, str, /*length*/ -1, /*x*/ 0, /*y*/ 0, /*opaque*/ false);
+//        if (ButtonISR() == 1){
+//            GrStringDraw(&sContext, "S1", /*length*/ 2, /*x*/ 0, /*y*/ 10, /*opaque*/ false);
+//        }
         GrFlush(&sContext); // flush the frame buffer to the LCD
-//        if (BoostButtonRead() == 1){
-//            GrStringDraw(&sContext, "button1", /*length*/ -1, /*x*/ 0, /*y*/ 10, /*opaque*/ false);
+//        if(ButtonRead() & 2){
+//            gTime = 0;
 //        }
-//        if (BoostButtonRead() == 2){
-//            GrStringDraw(&sContext, "button2", /*length*/ -1, /*x*/ 0, /*y*/ 20, /*opaque*/ false);
-//        }
-        if(ButtonRead() & 2){
-            gTime = 0;
-        }
     }
 }

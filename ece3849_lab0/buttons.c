@@ -19,6 +19,7 @@
 #include "sysctl_pll.h"
 #include "buttons.h"
 
+
 // public globals
 volatile uint32_t gButtons = 0; // debounced button state, one per bit in the lowest bits
                                 // button is pressed if its bit is 1, not pressed if 0
@@ -49,13 +50,26 @@ void ButtonInit(void)
     GPIOPinTypeGPIOInput(GPIO_PORTJ_BASE, GPIO_PIN_0 | GPIO_PIN_1);
     GPIOPadConfigSet(GPIO_PORTJ_BASE, GPIO_PIN_0 | GPIO_PIN_1, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
+    // GPIO PH1 = BoosterPack button S1
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOH);
+    GPIOPinTypeGPIOInput(GPIO_PORTH_BASE, GPIO_PIN_1);
+    GPIOPadConfigSet(GPIO_PORTH_BASE, GPIO_PIN_1, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+
+    // GPIO PK6 = BoosterPack button S2
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOK);
+    GPIOPinTypeGPIOInput(GPIO_PORTK_BASE, GPIO_PIN_6);
+    GPIOPadConfigSet(GPIO_PORTK_BASE, GPIO_PIN_6, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+
     // analog input AIN13, at GPIO PD2 = BoosterPack Joystick HOR(X)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
     GPIOPinTypeADC(GPIO_PORTD_BASE, GPIO_PIN_2);
     // analog input AIN17, at GPIO PK1 = BoosterPack Joystick VER(Y)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOK);
     GPIOPinTypeADC(GPIO_PORTK_BASE, GPIO_PIN_1);
-
+    // GPIO PD4 = BoosterPack Joystick Select button
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    GPIOPinTypeGPIOInput(GPIO_PORTD_BASE, GPIO_PIN_4);
+    GPIOPadConfigSet(GPIO_PORTD_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
     // initialize ADC0 peripheral
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
     uint32_t pll_frequency = SysCtlFrequencyGet(CRYSTAL_FREQUENCY);
@@ -145,8 +159,10 @@ void ButtonISR(void) {
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT); // clear interrupt flag
 
     // read hardware button state
-    uint32_t gpio_buttons =
-            ~GPIOPinRead(GPIO_PORTJ_BASE, 0xff) & (GPIO_PIN_1 | GPIO_PIN_0); // EK-TM4C1294XL buttons in positions 0 and 1
+    uint32_t gpio_buttons = (~GPIOPinRead(GPIO_PORTJ_BASE, 0xff) & (GPIO_PIN_1 | GPIO_PIN_0)) // EK-TM4C1294XL buttons in positions 0 and 1
+            | ((~GPIOPinRead(GPIO_PORTH_BASE, 0xff) & (GPIO_PIN_1)) << 1) //  S1
+            | ((~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6)) >> 3) // S2
+            | ((~GPIOPinRead(GPIO_PORTD_BASE, 0xff) & (GPIO_PIN_4))); //joystick
 
     uint32_t old_buttons = gButtons;    // save previous button state
     ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
@@ -160,39 +176,52 @@ void ButtonISR(void) {
     if (presses & 1) { // EK-TM4C1294XL button 1 pressed
         running = !running;
     }
+    if (presses & 2) {
+        gTime = 0;
+    }
+    if (presses & (1 << 2)) { // S1 pressed
+       gTime = 0;
+       return 1;
+//       GrStringDraw(&sContext, "S1", /*length*/ 2, /*x*/ 0, /*y*/ 0, /*opaque*/ false);
+    }
+    if (presses & (1 << 3)) { // S2 pressed
+        gTime = 0;
+    }
+    if (presses & (1 << 4)){ //joystick pressed
+        gTime = 0;
+    }
+
+
+
 
     if (running) {
         if (tic) gTime++; // increment time every other ISR call
         tic = !tic;
     }
 }
-uint32_t ButtonRead(void){
-    uint32_t gpio_buttons =
-                ~GPIOPinRead(GPIO_PORTJ_BASE, 0xff) & (GPIO_PIN_1 | GPIO_PIN_0); // EK-TM4C1294XL buttons in positions 0 and 1
-    uint32_t old_buttons = gButtons;    // save previous button state
-    ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
-
-    uint32_t presses = ~old_buttons & gButtons;   // detect button presses (transitions from not pressed to pressed)
-        presses |= ButtonAutoRepeat();      // autorepeat presses if a button is held long enough
-
-        return presses;
-}
+//uint32_t ButtonRead(void){
+//    uint32_t gpio_buttons =
+//               (~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6|GPIO_PIN_5)); // EK-TM4C1294XL buttons in positions 0 and 1
+//    uint32_t old_buttons = gButtons;    // save previous button state
+//    ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
+//
+//    uint32_t presses = ~old_buttons & gButtons;   // detect button presses (transitions from not pressed to pressed)
+//        presses |= ButtonAutoRepeat();      // autorepeat presses if a button is held long enough
+//
+//        return presses;
+//}
 
 //uint32_t BoostButtonRead(void){
 //    uint32_t gpio_buttons =
-//                   (~GPIOPinRead(GPIO_PORTH_BASE, 0xff) & (GPIO_PIN_1))<<1
-//                  |( ~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6))>>3;
+//                   (~GPIOPinRead(GPIO_PORTH_BASE, 0xff) & (GPIO_PIN_1))
+//                  |( ~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6));
 //    uint32_t old_buttons = gButtons;    // save previous button state
 //    ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
 //    uint32_t presses = ~old_buttons & gButtons;   // detect button presses (transitions from not pressed to pressed)
 //        presses |= ButtonAutoRepeat();      // autorepeat presses if a button is held long enough
 //
 //
-//    if(presses & 3){
-//        return 1;
-//    }
-//    else if (presses & 4){
-//        return 2;
-//    }
+//return presses;
+//
 //}
 
