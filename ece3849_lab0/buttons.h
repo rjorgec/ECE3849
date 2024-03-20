@@ -31,6 +31,10 @@
 #define JOYSTICK_UPPER_RELEASE_THRESHOLD 3095   // below this ADC value, button is released
 #define JOYSTICK_LOWER_PRESS_THRESHOLD 500      // below this ADC value, button is pressed
 #define JOYSTICK_LOWER_RELEASE_THRESHOLD 1000   // above this ADC value, button is released
+#define JOYSTICK_PRESS_THRESHOLD 500   // above this ADC value, button is released
+#define JOYSTICK_BUTTON_RELEASED 0
+#define JOYSTICK_BUTTON_PRESSED 1
+
 
 #define ADC_SAMPLING_RATE 1000000   // [samples/sec] desired ADC sampling rate
 #define CRYSTAL_FREQUENCY 25000000  // [Hz] crystal oscillator frequency used to calculate clock rates
@@ -51,5 +55,7 @@ void ButtonReadJoystick(void);
 
 // autorepeat button presses if a button is held long enough
 uint32_t ButtonAutoRepeat(void);
+//reads the user buttons
+uint32_t ButtonRead(void);
 
 #endif /* BUTTONS_H_ */
