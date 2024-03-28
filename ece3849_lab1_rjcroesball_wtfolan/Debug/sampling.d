@@ -24,6 +24,7 @@ sampling.obj: ../sysctl_pll.h
 sampling.obj: C:/ti/tirtos_tivac_2_16_01_14/products/TivaWare_C_Series-2.1.1.71b/driverlib/adc.h
 sampling.obj: C:/ti/tirtos_tivac_2_16_01_14/products/TivaWare_C_Series-2.1.1.71b/inc/tm4c1294ncpdt.h
 sampling.obj: ../buttons.h
+sampling.obj: ../sampling.h
 
 ../sampling.c:
 
@@ -72,4 +73,6 @@ C:/ti/tirtos_tivac_2_16_01_14/products/TivaWare_C_Series-2.1.1.71b/driverlib/adc
 C:/ti/tirtos_tivac_2_16_01_14/products/TivaWare_C_Series-2.1.1.71b/inc/tm4c1294ncpdt.h:
 
 ../buttons.h:
+
+../sampling.h:
 

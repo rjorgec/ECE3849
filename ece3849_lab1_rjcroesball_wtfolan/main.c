@@ -21,6 +21,7 @@
 #include "driverlib/gpio.h"
 #include "driverlib/pwm.h"
 #include "driverlib/pin_map.h"
+#include "sampling.h"
 #define PWM_FREQUENCY 20000 // PWM frequency = 20 kHz
 
 uint32_t gSystemClock; // [Hz] system clock frequency
@@ -63,6 +64,9 @@ int main(void)
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
     Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
 
+    uint16_t sampbuff[128];
+    int i;
+
 //    tContext sContext;
     GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
     GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
@@ -77,7 +81,8 @@ int main(void)
 
     while (true) {
         GrContextForegroundSet(&sContext, ClrBlack);
-                GrContextForegroundSet(&sContext, ClrBlue);
+        GrRectFill(&sContext, &rectFullScreen); // fill screen with black
+        GrContextForegroundSet(&sContext, ClrBlue);
         GrLineDrawV(&sContext, 5, 0, 128);
         GrLineDrawV(&sContext, 25, 0, 128);
         GrLineDrawV(&sContext, 45, 0, 128);
@@ -96,16 +101,22 @@ int main(void)
         GrLineDrawH(&sContext, 0, 128, 85);
         GrLineDrawH(&sContext, 0, 128, 105);
         GrLineDrawH(&sContext, 0, 128, 125);
-        GrRectFill(&sContext, &rectFullScreen); // fill screen with black
-        GrLineDrawV(&sContext, 0, 20, 128);
-        GrLineDrawH(&sContext, 0, 128, 20);
-        time = gTime; // read shared global only once
-        snprintf(str, sizeof(str), "Time = %.2u:%.2u:%.2u", (time/10000) %100, (time/100) %100, time %100); // convert time to string
-        GrContextForegroundSet(&sContext, ClrYellow); // yellow text
-        GrStringDraw(&sContext, str, /*length*/ -1, /*x*/ 0, /*y*/ 0, /*opaque*/ false);
+
+        GrContextForegroundSet(&sContext, ClrYellow);
+        if (gButtons == 8){
+            for(i = 0; i<129; i++){
+                sampbuff[i] = gADCBuffer[i];
+            }
+
+        }
+        int y;
+        int nexty;
+        for (i = 0; i<128; i++){
+            y = (sampbuff[i]/36);
+            nexty = (sampbuff[i+1]/36);
+            GrLineDraw(&sContext, i, y, i+1, nexty);
+        }
         GrFlush(&sContext); // flush the frame buffer to the LCD
-
-
 
     }
 }

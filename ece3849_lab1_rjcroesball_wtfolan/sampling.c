@@ -15,10 +15,8 @@
 #include "driverlib/adc.h"
 #include "inc/tm4c1294ncpdt.h"
 #include "buttons.h"
+#include "sampling.h"
 
-#define ADC_BUFFER_SIZE 2048 // size must be a power of 2
-// index wrapping macro
-#define ADC_BUFFER_WRAP(i) ((i) & (ADC_BUFFER_SIZE - 1))
 // latest sample index
 volatile int32_t gADCBufferIndex = ADC_BUFFER_SIZE - 1;
 volatile uint16_t gADCBuffer[ADC_BUFFER_SIZE]; // circular buffer
@@ -68,4 +66,10 @@ void ADC_ISR(void){
     gADCBufferIndex = ADC_BUFFER_WRAP(gADCBufferIndex + 1);
     // read sample from the ADC1 sequence 0 FIFO
     gADCBuffer[gADCBufferIndex] = ADC1_SSFIFO0_R;
+    return gADCBuffer;
 }
+
+uint16_t ADCSAMPLER(int i){
+    return gADCBuffer[i];
+}
+
