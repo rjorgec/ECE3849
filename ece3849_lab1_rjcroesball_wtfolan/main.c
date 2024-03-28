@@ -77,25 +77,6 @@ int main(void)
 
     while (true) {
         GrContextForegroundSet(&sContext, ClrBlack);
-                GrContextForegroundSet(&sContext, ClrBlue);
-        GrLineDrawV(&sContext, 5, 0, 128);
-        GrLineDrawV(&sContext, 25, 0, 128);
-        GrLineDrawV(&sContext, 45, 0, 128);
-        GrLineDrawV(&sContext, 64, 0, 128);
-        GrLineDrawV(&sContext, 65, 0, 128);
-        GrLineDrawV(&sContext, 66, 0, 128);
-        GrLineDrawV(&sContext, 85, 0, 128);
-        GrLineDrawV(&sContext, 105, 0, 128);
-        GrLineDrawV(&sContext, 125, 0, 128);
-        GrLineDrawH(&sContext, 0, 128, 5);
-        GrLineDrawH(&sContext, 0, 128, 25);
-        GrLineDrawH(&sContext, 0, 128, 45);
-        GrLineDrawH(&sContext, 0, 128, 64);
-        GrLineDrawH(&sContext, 0, 128, 65);
-        GrLineDrawH(&sContext, 0, 128, 66);
-        GrLineDrawH(&sContext, 0, 128, 85);
-        GrLineDrawH(&sContext, 0, 128, 105);
-        GrLineDrawH(&sContext, 0, 128, 125);
         GrRectFill(&sContext, &rectFullScreen); // fill screen with black
         GrLineDrawV(&sContext, 0, 20, 128);
         GrLineDrawH(&sContext, 0, 128, 20);
