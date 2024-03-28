@@ -199,23 +199,6 @@ void ButtonISR(void) {
     static bool tic = false;
     static bool running = true;
 
-    if (presses & 1) { // EK-TM4C1294XL button 1 pressed
-        running = !running;
-    }
-    if (presses & 2) {
-        gTime = 0;
-    }
-    if (presses & (1 << 2)) { // S1 pressed
-       gTime = 0;
-    }
-    if (presses & (1 << 3)) { // S2 pressed
-        gTime = 0;
-    }
-    if (presses & (1 << 4)){ //joystick pressed
-        gTime = 0;
-    }
-
-
 
 
     if (running) {
