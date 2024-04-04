@@ -122,27 +122,27 @@ void ButtonInit(void)
 // update the debounced button state gButtons
 void ButtonDebounce(uint32_t buttons)
 {
-	int32_t i, mask;
-	static int32_t state[BUTTON_COUNT]; // button state: 0 = released
-									    // BUTTON_PRESSED_STATE = pressed
-									    // in between = previous state
-	for (i = 0; i < BUTTON_COUNT; i++) {
-		mask = 1 << i;
-		if (buttons & mask) {
-			state[i] += BUTTON_STATE_INCREMENT;
-			if (state[i] >= BUTTON_PRESSED_STATE) {
-				state[i] = BUTTON_PRESSED_STATE;
-				gButtons |= mask; // update debounced button state
-			}
-		}
-		else {
-			state[i] -= BUTTON_STATE_DECREMENT;
-			if (state[i] <= 0) {
-				state[i] = 0;
-				gButtons &= ~mask;
-			}
-		}
-	}
+    int32_t i, mask;
+    static int32_t state[BUTTON_COUNT]; // button state: 0 = released
+                                        // BUTTON_PRESSED_STATE = pressed
+                                        // in between = previous state
+    for (i = 0; i < BUTTON_COUNT; i++) {
+        mask = 1 << i;
+        if (buttons & mask) {
+            state[i] += BUTTON_STATE_INCREMENT;
+            if (state[i] >= BUTTON_PRESSED_STATE) {
+                state[i] = BUTTON_PRESSED_STATE;
+                gButtons |= mask; // update debounced button state
+            }
+        }
+        else {
+            state[i] -= BUTTON_STATE_DECREMENT;
+            if (state[i] <= 0) {
+                state[i] = 0;
+                gButtons &= ~mask;
+            }
+        }
+    }
 }
 
 // sample joystick and convert to button presses

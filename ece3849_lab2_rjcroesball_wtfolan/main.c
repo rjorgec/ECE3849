@@ -22,13 +22,17 @@
 #include "driverlib/pwm.h"
 #include "driverlib/pin_map.h"
 #include "sampling.h"
+#include "driverlib/timer.h"
 #define PWM_FREQUENCY 20000 // PWM frequency = 20 kHz
 
 uint32_t gSystemClock; // [Hz] system clock frequency
 volatile uint32_t gTime = 12345; // time in hundredths of a second
 
 tContext sContext;
-
+uint32_t  count_loaded  = 0;
+uint32_t  count_unloaded = 0;
+float cpu_load = 0.0;
+uint32_t cpu_load_count(void);
 
 int main(void)
 
@@ -46,8 +50,7 @@ int main(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_2);
     GPIOPinConfigure(GPIO_PF2_M0PWM2);
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_2,
-    GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
     // configure the PWM0 peripheral, gen 1, outputs 2 and 3
     SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
     // use system clock without division
@@ -68,38 +71,60 @@ int main(void)
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
     Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
 
-    uint16_t sampbuff[128];
+    uint16_t sampbuff[LCD_VERTICAL_MAX];
     int i;
+    int prevy;
+    int y;
     int trigger;
     int voltsPerDiv = 4;
     float fVoltsPerDiv[] = {0.1, 0.2, 0.5, 1, 2};
-    float fScale = (VIN_RANGE * PIXELS_PER_DIV)/((1 << ADC_BITS) * fVoltsPerDiv[voltsPerDiv]);
+//    float fScale = (VIN_RANGE * PIXELS_PER_DIV)/((1 << ADC_BITS) * fVoltsPerDiv[voltsPerDiv]);
+//    int y = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff - ADC_OFFSET));
     int tSlope = 1;
 //    tContext sContext;
-    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
-    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
     ButtonInit();
     ADCInit();
-    IntMasterEnable();
+    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
+    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
+    // code for keeping track of CPU load
+
+        // initialize timer 3 in one-shot mode for polled timing
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+        TimerDisable(TIMER3_BASE, TIMER_BOTH);
+        TimerConfigure(TIMER3_BASE, TIMER_CFG_ONE_SHOT);
+        TimerLoadSet(TIMER3_BASE, TIMER_A, (gSystemClock - 1)/100); // 10 msec interval
+
+        count_unloaded = cpu_load_count();
+
+        IntMasterEnable();
+//
+//        TimerEnable(TIMER0_BASE, TIMER_A);
+//        TimerEnable(TIMER1_BASE, TIMER_A);
+//        TimerEnable(TIMER2_BASE, TIMER_A);
+//
+
+//    IntMasterEnable();
     uint32_t time;  // local copy of gTime
     char str[50];   // string buffer
     // full-screen rectangle
     tRectangle rectFullScreen = {0, 0, GrContextDpyWidthGet(&sContext)-1, GrContextDpyHeightGet(&sContext)-1};
-    str[0] = 'trig missing';
     const char * const gVoltageScaleStr[] = {
     "100 mV", "200 mV", "500 mV", " 1 V", " 2 V"
     };
-
+    const char * triglost[] = {"trigger not found"};
 
     while (true) {
+        count_loaded = cpu_load_count();
+        cpu_load = 1.0f - (float)count_loaded/count_unloaded; // compute CPU load
+
 
         while (fifo_get(&button)){
             switch(button){
                 case 'w':
-                    voltsPerDiv = ++voltsPerDiv > 4 ? 4 : voltsPerDiv++;
+                    voltsPerDiv = voltsPerDiv + 1 > 4 ? 4 : voltsPerDiv + 1;
                     break;
                 case 't':
-                    voltsPerDiv = --voltsPerDiv <= 0 ? 0 : voltsPerDiv--;
+                    voltsPerDiv = voltsPerDiv - 1 <= 0 ? 0 : voltsPerDiv - 1;
                     break;
                 case 'f':
                     tSlope = !tSlope;
@@ -107,6 +132,8 @@ int main(void)
             }
         }
 
+        float fScale = (VIN_RANGE * PIXELS_PER_DIV)/((1 << ADC_BITS) * fVoltsPerDiv[voltsPerDiv]);
+//        int y = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff - ADC_OFFSET));
 
         GrContextForegroundSet(&sContext, ClrBlack);
         GrRectFill(&sContext, &rectFullScreen); // fill screen with black
@@ -134,17 +161,14 @@ int main(void)
 
         //TODO: IMPLEMENT SCALING
 
-        for (i = 0; i < LCD_HORIZONTAL_MAX - 1; i++){
-//            sample[i] = gADCBuffer[ADC_BUFFER_WRAP(trigger - LCD_HORIZONTAL/2+i)];
 
-        }
         GrContextForegroundSet(&sContext, ClrWhite);
         GrStringDraw(&sContext, gVoltageScaleStr[voltsPerDiv], -1, 50, 0, false);
 
         if (!TrigFound){
-           for(i = 0; i<13; i++){
-               GrStringDraw(&sContext, str[i], -1, 1, 120, false);
-           }
+//           for(i = 0; i<13; i++){
+               GrStringDraw(&sContext, triglost, -1, 1, 120, false);
+//           }
         }
         if (tSlope){
             GrLineDraw(&sContext, 105, 10, 115, 10);
@@ -163,21 +187,39 @@ int main(void)
 
 
         GrContextForegroundSet(&sContext, ClrYellow);
-        if (gButtons == 8){
-            for(i = 0; i<129; i++){
-                sampbuff[i] = gADCBuffer[i];
+//        if (gButtons == 8){
+            for(i = 0; i<LCD_VERTICAL_MAX; i++){
+                sampbuff[i] = gADCBuffer[ADC_BUFFER_WRAP(trigger - LCD_HORIZONTAL_MAX / 2 + i)];
             }
 
+//        }
+//        int y;
+
+        for (i = 0; i<LCD_VERTICAL_MAX; i++){
+//            y = (sampbuff[i]/36);
+            y = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[i] - ADC_OFFSET));
+//            nexty = (sampbuff[i+1]/36);
+            GrLineDraw(&sContext, i, prevy, i+1, y);
+            prevy = y;
+
         }
-        int y;
-        int nexty;
-        for (i = 0; i<128; i++){
-            y = (sampbuff[i]/36);
-            nexty = (sampbuff[i+1]/36);
-            GrLineDraw(&sContext, i, y, i+1, nexty);
-        }
+        snprintf(str, sizeof(str), "CPU load = %.1f%%", cpu_load*100);
+        GrStringDraw(&sContext, str, -1, 30, 120, false);
+
         GrFlush(&sContext); // flush the frame buffer to the LCD
 
 
     }
+}
+
+
+
+uint32_t cpu_load_count(void)
+{
+    uint32_t i = 0;
+    TimerIntClear(TIMER3_BASE, TIMER_TIMA_TIMEOUT);
+    TimerEnable(TIMER3_BASE, TIMER_A); // start one-shot timer
+    while (!(TimerIntStatus(TIMER3_BASE, false) & TIMER_TIMA_TIMEOUT))
+        i++;
+    return i;
 }
