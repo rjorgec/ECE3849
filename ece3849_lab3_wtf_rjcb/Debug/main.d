@@ -184,6 +184,44 @@ main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sys
 main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
 main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
 main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Clock.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/package/Clock_TimerProxy.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Queue.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Clock.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event__prologue.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Queue.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Clock.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event__epilogue.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Mailbox.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IHeap.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Queue.h
+main.obj: C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h
+main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h
 main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/BIOS.h
 main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/package/BIOS_RtsGateProxy.h
 main.obj: C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h
@@ -572,6 +610,82 @@ C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/T
 C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h:
 
 C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Clock.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/package/Clock_TimerProxy.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Queue.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Clock.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event__prologue.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Queue.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Clock.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Task.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event__epilogue.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Mailbox.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IHeap.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Queue.h:
+
+C:/ti/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Event.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h:
+
+C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/knl/Semaphore.h:
 
 C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/ti/sysbios/BIOS.h:
 

@@ -32,8 +32,8 @@ uint32_t gADCSamplingRate;      // [Hz] actual ADC sampling rate
 volatile char fifo[FIFO_SIZE];  // FIFO storage array
 volatile int fifo_head = 0; // index of the first item in the FIFO
 volatile int fifo_tail = 0; // index one step past the last item
-volatile bool buttaphore = false;
-
+//volatile bool buttaphore = false;
+volatile char buttmailbox;
 // imported globals
 extern uint32_t gSystemClock;   // [Hz] system clock frequency
 extern volatile uint32_t gTime; // time in hundredths of a second
@@ -86,7 +86,7 @@ void ButtonInit(void)
     ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_CH13);                             // Joystick HOR(X)
     ADCSequenceStepConfigure(ADC0_BASE, 0, 1, ADC_CTL_CH17 | ADC_CTL_IE | ADC_CTL_END);  // Joystick VER(Y)
     ADCSequenceEnable(ADC0_BASE, 0);
-
+}
 
 // update the debounced button state gButtons
 void ButtonDebounce(uint32_t buttons)
@@ -157,73 +157,72 @@ uint32_t ButtonAutoRepeat(void)
 }
 
 // ISR for scanning and debouncing buttons
-void ButtonISR(void) {
-//    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT); // clear interrupt flag
-    if(buttaphore){
-        // read hardware button state
-        uint32_t gpio_buttons = (~GPIOPinRead(GPIO_PORTJ_BASE, 0xff) & (GPIO_PIN_1 | GPIO_PIN_0)) // EK-TM4C1294XL buttons in positions 0 and 1
-                | ((~GPIOPinRead(GPIO_PORTH_BASE, 0xff) & (GPIO_PIN_1)) << 1) //  S1
-                | ((~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6)) >> 3) // S2
-                | ((~GPIOPinRead(GPIO_PORTD_BASE, 0xff) & (GPIO_PIN_4))); //joystick
-
-        uint32_t old_buttons = gButtons;    // save previous button state
-        ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
-        ButtonReadJoystick();               // Convert joystick state to button presses. The result is in gButtons.
-        uint32_t presses = ~old_buttons & gButtons;   // detect button presses (transitions from not pressed to pressed)
-        presses |= ButtonAutoRepeat();      // autorepeat presses if a button is held long enough
-
-    //    static bool tic = false;
-    //    static bool running = true;
-//LEFT OFF AFTER CREATING BUTTON TASK AND CLOCK INSTANCE, NO CLUE WHAT TO DO NOW
-           if (presses & 1) { // EK-TM4C1294XL button 1 pressed
-               fifo_put('w');
-           }
-
-           if (presses & 2) { // EK-TM4C1294XL button 2 pressed
-               fifo_put('t');
-           }
-
-           if (presses & 8){  // EK-TM4C1294XL button pressed
-               fifo_put('f');
-           }
-
-    //    if (running) {
-    //        if (tic) gTime++; // increment time every other ISR call
-    //        tic = !tic;}
-    }
-}
+//void ButtonISR(void) {
+////    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT); // clear interrupt flag
+//    while(1){
+//        Semaphore_pend(buttaphore, BIOS_WAIT_FOREVER);
+//            // read hardware button state
+//            uint32_t gpio_buttons = (~GPIOPinRead(GPIO_PORTJ_BASE, 0xff) & (GPIO_PIN_1 | GPIO_PIN_0)) // EK-TM4C1294XL buttons in positions 0 and 1
+//                    | ((~GPIOPinRead(GPIO_PORTH_BASE, 0xff) & (GPIO_PIN_1)) << 1) //  S1
+//                    | ((~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6)) >> 3) // S2
+//                    | ((~GPIOPinRead(GPIO_PORTD_BASE, 0xff) & (GPIO_PIN_4))); //joystick
+//
+//            uint32_t old_buttons = gButtons;    // save previous button state
+//            ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
+//            ButtonReadJoystick();               // Convert joystick state to button presses. The result is in gButtons.
+//            uint32_t presses = ~old_buttons & gButtons;   // detect button presses (transitions from not pressed to pressed)
+//            presses |= ButtonAutoRepeat();      // autorepeat presses if a button is held long enough
+//
+//
+//               if (presses & 1) { // EK-TM4C1294XL button 1 pressed
+//                   buttmailbox = 'w';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
+//
+//               if (presses & 2) { // EK-TM4C1294XL button 2 pressed
+//                   buttmailbox = 't';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
+//
+//               if (presses & 8){  // EK-TM4C1294XL button pressed
+//                   buttmailbox = 'f';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
+//
+//    }
+//}
 
 // put data into the FIFO, skip if full
 // returns 1 on success, 0 if FIFO was full
-int fifo_put(char data) {
-    int new_tail = fifo_tail + 1;
-    if (new_tail >= FIFO_SIZE) new_tail = 0; // wrap around
-    if (fifo_head != new_tail) {    // if the FIFO is not full
-        fifo[fifo_tail] = data;     // store data into the FIFO
-        fifo_tail = new_tail;       // advance FIFO tail index
-        return 1;                   // success
-    }
-    return 0;   // full
-}
-
-// get data from the FIFO
-// returns 1 on success, 0 if FIFO was empty
-int fifo_get(char *data) {
-    if (fifo_head != fifo_tail) {   // if the FIFO is not empty
-        *data = fifo[fifo_head];    // read data from the FIFO               // advance FIFO head index
-        if (fifo_head + 1 >= FIFO_SIZE){
-            fifo_head = 0;
-        }
-        else { // wrap around
-            fifo_head++;
-        }
-        return 1;                   // success
-    }
-    return 0;   // empty
-}
-
-void buttclock(void){
-    buttaphore = true;
-}
+//int fifo_put(char data) {
+//    int new_tail = fifo_tail + 1;
+//    if (new_tail >= FIFO_SIZE) new_tail = 0; // wrap around
+//    if (fifo_head != new_tail) {    // if the FIFO is not full
+//        fifo[fifo_tail] = data;     // store data into the FIFO
+//        fifo_tail = new_tail;       // advance FIFO tail index
+//        return 1;                   // success
+//    }
+//    return 0;   // full
+//}
+//
+//// get data from the FIFO
+//// returns 1 on success, 0 if FIFO was empty
+//int fifo_get(char *data) {
+//    if (fifo_head != fifo_tail) {   // if the FIFO is not empty
+//        *data = fifo[fifo_head];    // read data from the FIFO               // advance FIFO head index
+//        if (fifo_head + 1 >= FIFO_SIZE){
+//            fifo_head = 0;
+//        }
+//        else { // wrap around
+//            fifo_head++;
+//        }
+//        return 1;                   // success
+//    }
+//    return 0;   // empty
+//}
+//
+//void buttclock(UArg arg1, UArg arg2){
+//    Semaphore_post(buttaphore);
+//}
 
 

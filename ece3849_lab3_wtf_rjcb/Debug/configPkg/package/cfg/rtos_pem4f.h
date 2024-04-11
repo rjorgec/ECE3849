@@ -22,6 +22,30 @@ extern const ti_sysbios_knl_Task_Handle Processing;
 #include <ti/sysbios/knl/Task.h>
 extern const ti_sysbios_knl_Task_Handle Display;
 
+#include <ti/sysbios/knl/Clock.h>
+extern const ti_sysbios_knl_Clock_Handle clock0;
+
+#include <ti/sysbios/knl/Task.h>
+extern const ti_sysbios_knl_Task_Handle butttask;
+
+#include <ti/sysbios/knl/Task.h>
+extern const ti_sysbios_knl_Task_Handle userinput;
+
+#include <ti/sysbios/knl/Semaphore.h>
+extern const ti_sysbios_knl_Semaphore_Handle waveaphore;
+
+#include <ti/sysbios/knl/Semaphore.h>
+extern const ti_sysbios_knl_Semaphore_Handle processaphore;
+
+#include <ti/sysbios/knl/Semaphore.h>
+extern const ti_sysbios_knl_Semaphore_Handle displayaphore;
+
+#include <ti/sysbios/knl/Mailbox.h>
+extern const ti_sysbios_knl_Mailbox_Handle mailbox0;
+
+#include <ti/sysbios/knl/Semaphore.h>
+extern const ti_sysbios_knl_Semaphore_Handle buttaphore;
+
 extern int xdc_runtime_Startup__EXECFXN__C;
 
 extern int xdc_runtime_Startup__RESETFXN__C;

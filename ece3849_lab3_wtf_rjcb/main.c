@@ -43,15 +43,15 @@ uint32_t  count_loaded  = 0;
 uint32_t  count_unloaded = 0;
 float cpu_load = 0.0;
 uint32_t cpu_load_count(void);
-volatile bool waveaphore = true;
-volatile bool processaphore = false;
-volatile bool displayaphore = false;
+//volatile bool waveaphore = true;
+//volatile bool processaphore = false;
+//volatile bool displayaphore = false;
 
 uint32_t curry = 0;
 uint16_t processbuff[LCD_VERTICAL_MAX];
 uint16_t sampbuff[LCD_VERTICAL_MAX];
 //this is probably a bad idea
-
+volatile char buttmailbox;
 int prevy;
 int y;
 int trigger;
@@ -92,11 +92,14 @@ int main(void)
        PWMOutputState(PWM0_BASE, PWM_OUT_2_BIT, true);
        PWMGenEnable(PWM0_BASE, PWM_GEN_1);
 
-    /* Start BIOS */
-    BIOS_start();
+       // initialize timer 3 in one-shot mode for polled timing
+       SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+       TimerDisable(TIMER3_BASE, TIMER_BOTH);
+       TimerConfigure(TIMER3_BASE, TIMER_CFG_ONE_SHOT);
+       TimerLoadSet(TIMER3_BASE, TIMER_A, (gSystemClock - 1)/100); // 10 msec interval
 
+       count_unloaded = cpu_load_count();
 
-    char button;
 
 
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
@@ -104,115 +107,18 @@ int main(void)
 
 
     ButtonInit();
-    ADCInit();
-    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
-    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
+
+//    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
+//    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
     // code for keeping track of CPU load
 
 
-        count_unloaded = cpu_load_count();
-        IntMasterEnable();
-    uint32_t time;  // local copy of gTime
-       char str[50];   // string buffer
-       // full-screen rectangle
-       tRectangle rectFullScreen = {0, 0, GrContextDpyWidthGet(&sContext)-1, GrContextDpyHeightGet(&sContext)-1};
-       const char * const gVoltageScaleStr[] = {
-       "100 mV", "200 mV", "500 mV", " 1 V", " 2 V"
-       };
-       const char * triglost[] = {"trigger not found"};
-
-       while (true) {
-           count_loaded = cpu_load_count();
-           cpu_load = 1.0f - (float)count_loaded/count_unloaded; // compute CPU load
 
 
-           while (fifo_get(&button)){
-               switch(button){
-                   case 'w':
-                       voltsPerDiv = voltsPerDiv + 1 > 4 ? 4 : voltsPerDiv + 1;
-                       break;
-                   case 't':
-                       voltsPerDiv = voltsPerDiv - 1 <= 0 ? 0 : voltsPerDiv - 1;
-                       break;
-                   case 'f':
-                       tSlope = !tSlope;
-                       break;
-               }
-           }
+        /* Start BIOS */
+        BIOS_start();
 
 
-
-           GrContextForegroundSet(&sContext, ClrBlack);
-           GrRectFill(&sContext, &rectFullScreen); // fill screen with black
-           GrContextForegroundSet(&sContext, ClrBlue);
-           GrLineDrawV(&sContext, 5, 0, 128);
-           GrLineDrawV(&sContext, 25, 0, 128);
-           GrLineDrawV(&sContext, 45, 0, 128);
-           GrLineDrawV(&sContext, 64, 0, 128);
-           GrLineDrawV(&sContext, 65, 0, 128);
-           GrLineDrawV(&sContext, 66, 0, 128);
-           GrLineDrawV(&sContext, 85, 0, 128);
-           GrLineDrawV(&sContext, 105, 0, 128);
-           GrLineDrawV(&sContext, 125, 0, 128);
-           GrLineDrawH(&sContext, 0, 128, 5);
-           GrLineDrawH(&sContext, 0, 128, 25);
-           GrLineDrawH(&sContext, 0, 128, 45);
-           GrLineDrawH(&sContext, 0, 128, 64);
-           GrLineDrawH(&sContext, 0, 128, 65);
-           GrLineDrawH(&sContext, 0, 128, 66);
-           GrLineDrawH(&sContext, 0, 128, 85);
-           GrLineDrawH(&sContext, 0, 128, 105);
-           GrLineDrawH(&sContext, 0, 128, 125);
-
-
-
-           //TODO: IMPLEMENT SCALING
-
-
-           GrContextForegroundSet(&sContext, ClrWhite);
-           GrStringDraw(&sContext, gVoltageScaleStr[voltsPerDiv], -1, 50, 0, false);
-
-           if (!TrigFound){
-   //           for(i = 0; i<13; i++){
-                  GrStringDraw(&sContext, triglost, -1, 1, 120, false);
-   //           }
-           }
-           if (tSlope){
-               GrLineDraw(&sContext, 105, 10, 115, 10);
-               GrLineDraw(&sContext, 115, 10, 115, 0);
-               GrLineDraw(&sContext, 115, 0, 125, 0);
-               GrLineDraw(&sContext, 112, 6, 115, 2);
-               GrLineDraw(&sContext, 115, 2, 118, 6);
-           }
-           if (!tSlope){
-               GrLineDraw(&sContext, 105, 0, 115, 0);
-               GrLineDraw(&sContext, 115, 10, 115, 0);
-               GrLineDraw(&sContext, 115, 10, 125, 10);
-               GrLineDraw(&sContext, 112, 3, 115, 7);
-               GrLineDraw(&sContext, 115, 7, 118, 3);
-           }
-
-
-           GrContextForegroundSet(&sContext, ClrYellow);
-   //        if (gButtons == 8){
-
-
-   //        }
-   //        int y;
-//processtask down below
-//           for (i = 0; i<LCD_VERTICAL_MAX; i++){
-//               y = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[i] - ADC_OFFSET));
-//               GrLineDraw(&sContext, i, prevy, i+1, y);
-//               prevy = y;
-//
-//           }
-           snprintf(str, sizeof(str), "CPU load = %.1f%%", cpu_load*100);
-           GrStringDraw(&sContext, str, -1, 30, 120, false);
-
-           GrFlush(&sContext); // flush the frame buffer to the LCD
-
-
-       }
     return (0);
 }
 
@@ -235,34 +141,156 @@ void task0_func(UArg arg1, UArg arg2)
 //    }
 }
 
-void waveformtask(void){
-    if (waveaphore){
+void waveformtask(UArg arg1, UArg arg2){
+    IntMasterEnable();
+    while(1){
+    Semaphore_pend(waveaphore, BIOS_WAIT_FOREVER);
         trigger = tSlope ? RisingTrigger(): FallingTrigger();
         int i;
         for(i = 0; i<LCD_VERTICAL_MAX; i++){
             sampbuff[i] = gADCBuffer[ADC_BUFFER_WRAP(trigger - LCD_HORIZONTAL_MAX / 2 + i)];
         }
-        processaphore = true;
-        waveaphore = false;
+        Semaphore_post(processaphore);
     }
 }
 
-void processingtask(void){
-    if (processaphore){
+void processingtask(UArg arg1, UArg arg2){
+    while(1){
+    Semaphore_pend(processaphore, BIOS_WAIT_FOREVER);
         float fScale = (VIN_RANGE * PIXELS_PER_DIV)/((1 << ADC_BITS) * fVoltsPerDiv[voltsPerDiv]);
         curry = curry+1;
         processbuff[curry] = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[curry] - ADC_OFFSET));
 
-        processaphore = false;
-        displayaphore = true;
+        Semaphore_post(displayaphore);
     }
 }
 
-void displaytask(void){
-    if(displayaphore){
-              GrLineDraw(&sContext, curry, processbuff[curry], curry+1, processbuff[curry+1]);
-              displayaphore = false;
+void displaytask(UArg arg1, UArg arg2){
+    tRectangle rectFullScreen = {0, 0, GrContextDpyWidthGet(&sContext)-1, GrContextDpyHeightGet(&sContext)-1};
+    const char * const gVoltageScaleStr[] = {
+    "100 mV", "200 mV", "500 mV", " 1 V", " 2 V"
+    };
+    char str[50];   // string buffer
+    count_loaded = cpu_load_count();
+    cpu_load = 1.0f - (float)count_loaded/count_unloaded; // compute CPU load
+    Crystalfontz128x128_Init(); // Initialize the LCD display driver
+    Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
+    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
+    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
+
+    const char * triglost[] = {"trigger not found"};
+    while(1){
+    Semaphore_pend(displayaphore, BIOS_WAIT_FOREVER);
+        GrContextForegroundSet(&sContext, ClrBlack);
+        GrRectFill(&sContext, &rectFullScreen); // fill screen with black
+        GrContextForegroundSet(&sContext, ClrBlue);
+        GrLineDrawV(&sContext, 5, 0, 128);
+        GrLineDrawV(&sContext, 25, 0, 128);
+        GrLineDrawV(&sContext, 45, 0, 128);
+        GrLineDrawV(&sContext, 64, 0, 128);
+        GrLineDrawV(&sContext, 65, 0, 128);
+        GrLineDrawV(&sContext, 66, 0, 128);
+        GrLineDrawV(&sContext, 85, 0, 128);
+        GrLineDrawV(&sContext, 105, 0, 128);
+        GrLineDrawV(&sContext, 125, 0, 128);
+        GrLineDrawH(&sContext, 0, 128, 5);
+        GrLineDrawH(&sContext, 0, 128, 25);
+        GrLineDrawH(&sContext, 0, 128, 45);
+        GrLineDrawH(&sContext, 0, 128, 64);
+        GrLineDrawH(&sContext, 0, 128, 65);
+        GrLineDrawH(&sContext, 0, 128, 66);
+        GrLineDrawH(&sContext, 0, 128, 85);
+        GrLineDrawH(&sContext, 0, 128, 105);
+        GrLineDrawH(&sContext, 0, 128, 125);
+
+
+
+            GrContextForegroundSet(&sContext, ClrWhite);
+            GrStringDraw(&sContext, gVoltageScaleStr[voltsPerDiv], -1, 50, 0, false);
+            if (!TrigFound){
+                   GrStringDraw(&sContext, triglost, -1, 1, 120, false);
+            }
+            if (tSlope){
+                GrLineDraw(&sContext, 105, 10, 115, 10);
+                GrLineDraw(&sContext, 115, 10, 115, 0);
+                GrLineDraw(&sContext, 115, 0, 125, 0);
+                GrLineDraw(&sContext, 112, 6, 115, 2);
+                GrLineDraw(&sContext, 115, 2, 118, 6);
+            }
+            if (!tSlope){
+                GrLineDraw(&sContext, 105, 0, 115, 0);
+                GrLineDraw(&sContext, 115, 10, 115, 0);
+                GrLineDraw(&sContext, 115, 10, 125, 10);
+                GrLineDraw(&sContext, 112, 3, 115, 7);
+                GrLineDraw(&sContext, 115, 7, 118, 3);
+            }
+
+            GrContextForegroundSet(&sContext, ClrYellow);
+            GrLineDraw(&sContext, curry, processbuff[curry], curry+1, processbuff[curry+1]);
+
+            snprintf(str, sizeof(str), "CPU load = %.1f%%", cpu_load*100);
+            GrStringDraw(&sContext, str, -1, 30, 120, false);
+
+              GrFlush(&sContext); // flush the frame buffer to the LCD
+              Semaphore_post(waveaphore);
+    }
+}
+void user_input(UArg arg1, UArg arg2){
+    while(1){
+    Mailbox_pend(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+        switch(buttmailbox){
+            case 'w':
+                voltsPerDiv = voltsPerDiv + 1 > 4 ? 4 : voltsPerDiv + 1;
+                break;
+            case 't':
+                voltsPerDiv = voltsPerDiv - 1 <= 0 ? 0 : voltsPerDiv - 1;
+                break;
+            case 'f':
+                tSlope = !tSlope;
+                break;
+        }
+
     }
 }
 
+
+
+void buttclock(UArg arg1, UArg arg2){
+    Semaphore_post(buttaphore);
+}
+
+void ButtonISR(void) {
+//    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT); // clear interrupt flag
+    while(1){
+        Semaphore_pend(buttaphore, BIOS_WAIT_FOREVER);
+            // read hardware button state
+            uint32_t gpio_buttons = (~GPIOPinRead(GPIO_PORTJ_BASE, 0xff) & (GPIO_PIN_1 | GPIO_PIN_0)) // EK-TM4C1294XL buttons in positions 0 and 1
+                    | ((~GPIOPinRead(GPIO_PORTH_BASE, 0xff) & (GPIO_PIN_1)) << 1) //  S1
+                    | ((~GPIOPinRead(GPIO_PORTK_BASE, 0xff) & (GPIO_PIN_6)) >> 3) // S2
+                    | ((~GPIOPinRead(GPIO_PORTD_BASE, 0xff) & (GPIO_PIN_4))); //joystick
+
+            uint32_t old_buttons = gButtons;    // save previous button state
+            ButtonDebounce(gpio_buttons);       // Run the button debouncer. The result is in gButtons.
+            ButtonReadJoystick();               // Convert joystick state to button presses. The result is in gButtons.
+            uint32_t presses = ~old_buttons & gButtons;   // detect button presses (transitions from not pressed to pressed)
+            presses |= ButtonAutoRepeat();      // autorepeat presses if a button is held long enough
+
+
+               if (presses & 1) { // EK-TM4C1294XL button 1 pressed
+                   buttmailbox = 'w';
+                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+               }
+
+               if (presses & 2) { // EK-TM4C1294XL button 2 pressed
+                   buttmailbox = 't';
+                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+               }
+
+               if (presses & 8){  // EK-TM4C1294XL button pressed
+                   buttmailbox = 'f';
+                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+               }
+
+    }
+}
 
