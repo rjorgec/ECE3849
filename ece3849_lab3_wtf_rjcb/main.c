@@ -38,7 +38,6 @@ uint32_t gSystemClock = 120000000; // [Hz] system clock frequency
 uint32_t gSystemClock; // [Hz] system clock frequency
 volatile uint32_t gTime = 12345; // time in hundredths of a second
 
-tContext sContext;
 uint32_t  count_loaded  = 0;
 uint32_t  count_unloaded = 0;
 float cpu_load = 0.0;
@@ -51,7 +50,7 @@ uint32_t curry = 0;
 uint16_t processbuff[LCD_VERTICAL_MAX];
 uint16_t sampbuff[LCD_VERTICAL_MAX];
 //this is probably a bad idea
-volatile char buttmailbox;
+char buttmailbox;
 int prevy;
 int y;
 int trigger;
@@ -105,7 +104,7 @@ int main(void)
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
     Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
 
-
+    ADCInit();
     ButtonInit();
 
 //    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
@@ -158,25 +157,30 @@ void processingtask(UArg arg1, UArg arg2){
     while(1){
     Semaphore_pend(processaphore, BIOS_WAIT_FOREVER);
         float fScale = (VIN_RANGE * PIXELS_PER_DIV)/((1 << ADC_BITS) * fVoltsPerDiv[voltsPerDiv]);
-        curry = curry+1;
-        processbuff[curry] = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[curry] - ADC_OFFSET));
-
+//        curry = curry+1;
+        for(curry = 0; curry < LCD_VERTICAL_MAX; curry++){
+            processbuff[curry] = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[curry] - ADC_OFFSET));
+        }
         Semaphore_post(displayaphore);
+//        Semaphore_post(waveaphore);
     }
 }
 
 void displaytask(UArg arg1, UArg arg2){
+    tContext sContext;
+    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
+    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
     tRectangle rectFullScreen = {0, 0, GrContextDpyWidthGet(&sContext)-1, GrContextDpyHeightGet(&sContext)-1};
+
     const char * const gVoltageScaleStr[] = {
     "100 mV", "200 mV", "500 mV", " 1 V", " 2 V"
     };
     char str[50];   // string buffer
     count_loaded = cpu_load_count();
     cpu_load = 1.0f - (float)count_loaded/count_unloaded; // compute CPU load
-    Crystalfontz128x128_Init(); // Initialize the LCD display driver
-    Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
-    GrContextInit(&sContext, &g_sCrystalfontz128x128); // Initialize the grlib graphics context
-    GrContextFontSet(&sContext, &g_sFontFixed6x8); // select font
+
+
+
 
     const char * triglost[] = {"trigger not found"};
     while(1){
@@ -226,8 +230,9 @@ void displaytask(UArg arg1, UArg arg2){
             }
 
             GrContextForegroundSet(&sContext, ClrYellow);
-            GrLineDraw(&sContext, curry, processbuff[curry], curry+1, processbuff[curry+1]);
-
+            for(curry = 0; curry < LCD_VERTICAL_MAX-1; curry++){
+                GrLineDraw(&sContext, curry, processbuff[curry], curry+1, processbuff[curry+1]);
+            }
             snprintf(str, sizeof(str), "CPU load = %.1f%%", cpu_load*100);
             GrStringDraw(&sContext, str, -1, 30, 120, false);
 
@@ -259,8 +264,9 @@ void buttclock(UArg arg1, UArg arg2){
     Semaphore_post(buttaphore);
 }
 
-void ButtonISR(void) {
+void Buttontask(UArg arg1, UArg arg2) {
 //    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT); // clear interrupt flag
+    char buttmailbox;
     while(1){
         Semaphore_pend(buttaphore, BIOS_WAIT_FOREVER);
             // read hardware button state
