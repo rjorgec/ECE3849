@@ -1854,7 +1854,7 @@ __FAR__ const xdc_SizeT ti_sysbios_knl_Task_Module_State_terminatedQ__O = offset
  *  Define absolute path prefix for this executable's
  *  configuration generated files.
  */
-xdc__META(__ASM__, "@(#)__ASM__ = C:/Users/rjcroesball/Downloads/ece_3849_lab3_april11FINALWORKING_RJCB_WTF/ece3849_lab2_starter/Debug/configPkg/package/cfg/rtos_pem4f");
+xdc__META(__ASM__, "@(#)__ASM__ = C:/Users/wtfolan/ece3849_lab2_starter/Debug/configPkg/package/cfg/rtos_pem4f");
 
 /*
  *  ======== __ISA__ ========

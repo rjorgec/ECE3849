@@ -1,6 +1,6 @@
 #
 # This file was generated based on the configuration script:
-#     C:\Users\rjcroesball\Downloads\ece_3849_lab3_april11FINALWORKING_RJCB_WTF\ece3849_lab2_starter\rtos.cfg
+#     C:\Users\wtfolan\ece3849_lab2_starter\rtos.cfg
 #
 # This makefile may be included in other makefiles that need to build
 # the libraries containing the compiled source files generated as
@@ -14,7 +14,7 @@
 #
 # The absolute path to the generated source directory (at the time the
 # sources were generated) is:
-#    C:\Users\rjcroesball\Downloads\ece_3849_lab3_april11FINALWORKING_RJCB_WTF\ece3849_lab2_starter\src
+#    C:\Users\wtfolan\ece3849_lab2_starter\src
 #
 GEN_SRC_DIR ?= ../src
 

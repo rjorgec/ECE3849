@@ -36,7 +36,7 @@ uint32_t gSystemClock = 120000000; // [Hz] system clock frequency
 #include <math.h>
 #include "kiss_fft.h"
 #include "_kiss_fft_guts.h"
-#define PI 3.14159265358979f
+#define PI 3.14159265358979
 #define NFFT 1024 // FFT length
 #define KISS_FFT_CFG_SIZE (sizeof(struct kiss_fft_state)+sizeof(kiss_fft_cpx)*(NFFT-1))
 
@@ -285,7 +285,7 @@ void displaytask(UArg arg1, UArg arg2){
             }
             else{
                 for(curry = 0; curry < LCD_VERTICAL_MAX-1; curry++){
-                    GrLineDraw(&sContext, curry, processbuff[curry], curry+1, processbuff[curry+1]);
+                    GrLineDraw(&sContext, curry, out_db[curry], curry+1, out_db[curry+1]);
                 }
             }
             snprintf(str, sizeof(str), "CPU load = %.1f%%", cpu_load*100);
