@@ -46,6 +46,9 @@ extern const ti_sysbios_knl_Mailbox_Handle mailbox0;
 #include <ti/sysbios/knl/Semaphore.h>
 extern const ti_sysbios_knl_Semaphore_Handle buttaphore;
 
+#include <ti/sysbios/gates/GateHwi.h>
+extern const ti_sysbios_gates_GateHwi_Handle gateHwi0;
+
 extern int xdc_runtime_Startup__EXECFXN__C;
 
 extern int xdc_runtime_Startup__RESETFXN__C;

@@ -18,11 +18,24 @@
 #include "sampling.h"
 #include "Crystalfontz128x128_ST7735.h"
 
+#include "driverlib/udma.h"
+#include <ti/sysbios/BIOS.h>
+#include <ti/sysbios/gates/GateHwi.h>
+
+#include <xdc/std.h>
+#include <xdc/runtime/System.h>
+#include <xdc/cfg/global.h>
+#pragma DATA_ALIGN(gDMAControlTable, 1024) // address alignment required
+tDMAControlTable gDMAControlTable[64]; // uDMA control table (global)
+
 // latest sample index
-volatile int32_t gADCBufferIndex = ADC_BUFFER_SIZE - 1;
+//volatile int32_t gADCBufferIndex = ADC_BUFFER_SIZE - 1;
 volatile uint16_t gADCBuffer[ADC_BUFFER_SIZE]; // circular buffer
 volatile uint32_t gADCErrors = 0; // number of missed ADC deadlines
 volatile bool TrigFound= false;
+
+
+int32_t getADCBufferIndex(void);
 
 void ADCInit(void){
 //all the ADC1 stuff
@@ -47,6 +60,11 @@ void ADCInit(void){
 
   // enable the sequence. it is now sampling
   ADCSequenceEnable(ADC1_BASE, 0);
+
+  //DMA ENABLE
+  ADCSequenceDMAEnable(ADC1_BASE, 0); // enable DMA for ADC1 sequence 0
+  ADCIntEnableEx(ADC1_BASE, ADC_INT_DMA_SS0); // enable ADC1 sequence 0 DMA interrupt  //IDFK IF THIS IS RIGHT
+
   // enable sequence 0 interrupt in the ADC1 peripheral
   ADCIntEnable(ADC1_BASE, 0);
   IntPrioritySet(INT_ADC1SS0, 0x00); // set ADC1 sequence 0 interrupt priority
@@ -58,7 +76,7 @@ void ADCInit(void){
 int RisingTrigger(void){ // search for rising edge trigger
     // Step 1
     TrigFound = true;
-    int x = gADCBufferIndex - LCD_HORIZONTAL_MAX / 2; // half screen width; don’t use a magic number
+    int x = getADCBufferIndex() - LCD_HORIZONTAL_MAX / 2; // half screen width; don’t use a magic number
     // Step 2
     int x_stop = x - ADC_BUFFER_SIZE / 2;
     for (; x > x_stop; x--) {
@@ -67,7 +85,7 @@ int RisingTrigger(void){ // search for rising edge trigger
     }
     // Step 3
     if (x == x_stop) // for loop ran to the end
-        x = gADCBufferIndex - LCD_HORIZONTAL_MAX / 2; // reset x back to how it was initialized
+        x = getADCBufferIndex() - LCD_HORIZONTAL_MAX / 2; // reset x back to how it was initialized
     TrigFound = false;
     return x;
 }
@@ -75,7 +93,7 @@ int RisingTrigger(void){ // search for rising edge trigger
 int FallingTrigger(void){ // search for rising edge trigger
     // Step 1
     TrigFound = true;
-    int x = gADCBufferIndex - LCD_HORIZONTAL_MAX / 2; // half screen width; don’t use a magic number
+    int x = getADCBufferIndex() - LCD_HORIZONTAL_MAX / 2; // half screen width; don’t use a magic number
     // Step 2
     int x_stop = x - ADC_BUFFER_SIZE / 2;
     for (; x > x_stop; x--) {
@@ -84,27 +102,75 @@ int FallingTrigger(void){ // search for rising edge trigger
     }
     // Step 3
     if (x == x_stop) // for loop ran to the end
-        x = gADCBufferIndex - LCD_HORIZONTAL_MAX / 2; // reset x back to how it was initialized
+        x = getADCBufferIndex() - LCD_HORIZONTAL_MAX / 2; // reset x back to how it was initialized
         TrigFound = false;
     return x;
 }
 
 
-void ADC_ISR(void){
-    // clear ADC1 sequence0 interrupt flag in the ADCISC register
-    ADC1_ISC_R = ADC_ISC_IN0;
-    // check for ADC FIFO overflow
-    if(ADC1_OSTAT_R & ADC_OSTAT_OV0) {
-        gADCErrors++; // count errors
-        ADC1_OSTAT_R = ADC_OSTAT_OV0; // clear overflow condition
-    }
-    gADCBufferIndex = ADC_BUFFER_WRAP(gADCBufferIndex + 1);
-    // read sample from the ADC1 sequence 0 FIFO
-    gADCBuffer[gADCBufferIndex] = ADC1_SSFIFO0_R;
-//    return gADCBuffer;
-}
+//void ADC_ISR(void){
+//    // clear ADC1 sequence0 interrupt flag in the ADCISC register
+//    ADC1_ISC_R = ADC_ISC_IN0;
+//    // check for ADC FIFO overflow
+//    if(ADC1_OSTAT_R & ADC_OSTAT_OV0) {
+//        gADCErrors++; // count errors
+//        ADC1_OSTAT_R = ADC_OSTAT_OV0; // clear overflow condition
+//    }
+//    gADCBufferIndex = ADC_BUFFER_WRAP(gADCBufferIndex + 1);
+//    // read sample from the ADC1 sequence 0 FIFO
+//    gADCBuffer[gADCBufferIndex] = ADC1_SSFIFO0_R;
+////    return gADCBuffer;
+//}
 
+// is DMA occurring in the primary channel?
+volatile bool gDMAPrimary = true;
+
+void ADC_ISR(void) // DMA
+{
+    ADCIntClearEx(ADC1_BASE, ADC_INT_DMA_SS0); // clear the ADC1 sequence 0 DMA interrupt flag
+    // Check the primary DMA channel for end of transfer, and
+    // restart if needed.
+    if (uDMAChannelModeGet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT) == UDMA_MODE_STOP) {
+        // restart the primary channel (same as setup)
+        uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R, (void*)&gADCBuffer[0], ADC_BUFFER_SIZE/2);
+        // DMA is currently occurring in the alternate buffer
+        gDMAPrimary = false;
+    }
+    // Check the alternate DMA channel for end of transfer, and
+    // restart if needed.
+    // Also set the gDMAPrimary global.
+    if(uDMAChannelModeGet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT) == UDMA_MODE_STOP){
+            uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R, (void*)&gADCBuffer[ADC_BUFFER_SIZE/2], ADC_BUFFER_SIZE/2);
+            gDMAPrimary = true;
+        }
+
+    // The DMA channel may be disabled if the CPU is paused by the debugger
+    if (!uDMAChannelIsEnabled(UDMA_SEC_CHANNEL_ADC10)) {
+        uDMAChannelEnable(UDMA_SEC_CHANNEL_ADC10);
+    // re-enable the DMA channel
+    }
+}
 uint16_t ADCSAMPLER(int i){
     return gADCBuffer[i];
 }
 
+int32_t getADCBufferIndex(void)
+{
+    int32_t index;
+
+    IArg keyGateHwi0;
+    keyGateHwi0 = GateHwi_enter(gateHwi0);
+
+    if (gDMAPrimary) { // DMA is currently in the primary channel
+        index = ADC_BUFFER_SIZE/2 - 1 -
+        uDMAChannelSizeGet(UDMA_SEC_CHANNEL_ADC10 |
+        UDMA_PRI_SELECT);
+    } else { // DMA is currently in the alternate channel
+        index = ADC_BUFFER_SIZE - 1 -
+        uDMAChannelSizeGet(UDMA_SEC_CHANNEL_ADC10 |
+        UDMA_ALT_SELECT);
+    }
+
+    GateHwi_leave(gateHwi0, keyGateHwi0);
+    return index;
+}

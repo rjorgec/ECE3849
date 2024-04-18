@@ -5,7 +5,7 @@ digraph configuration {
     concentrate=true;
     compound=true;
     label="\nConfiguration for configPkg/rtos.xem4f"
-  node [font=Helvetica, fontsize=14, fontcolor=black];  subgraph cluster0 {label=""; __cfg [label="C:/Users/wtfolan/ece3849_lab2_starter/rtos.cfg", color=white, fontcolor=blue];
+  node [font=Helvetica, fontsize=14, fontcolor=black];  subgraph cluster0 {label=""; __cfg [label="C:/Users/rjcroesball/Downloads/ece3849_lab4_rjcroesball_wtfolan_4_16/ece3849_lab2_starter/rtos.cfg", color=white, fontcolor=blue];
     node [font=Helvetica, fontsize=10];    subgraph cluster1 {
         label="";
         xdc_services_global__top [shape=box,label="xdc.services.global\n1,0,0,0", color=white];
@@ -358,7 +358,7 @@ digraph configuration {
     }
     subgraph cluster40 {
         label="";
-        ti_sysbios_gates__top [shape=box,label="ti.sysbios.gates\n2,0,0,0,1449624895255", color=white];
+        ti_sysbios_gates__top [shape=box,label="ti.sysbios.gates\n2,0,0,0,0", color=white];
         ti_sysbios_gates__bot [shape=point,label="", style=invis];
         ti_sysbios_gates_GateHwi [style=filled,fillcolor=lightgray, label="GateHwi"];
         ti_sysbios_gates__top -> ti_sysbios_gates_GateHwi[style=invis];

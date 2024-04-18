@@ -1,7 +1,7 @@
 /*
- * ECE 3849 Lab2 starter project
+ * ECE 3849 Lab 4 - W.T. Folan & R.J. Croes-Ball 4/18/2024
  *
- * Gene Bogdanov    9/13/2017
+ * based on Lab 2 starter by Gene Bogdanov    9/13/2017
  */
 /* XDCtools Header files */
 #include <xdc/std.h>
@@ -36,6 +36,13 @@ uint32_t gSystemClock = 120000000; // [Hz] system clock frequency
 #include <math.h>
 #include "kiss_fft.h"
 #include "_kiss_fft_guts.h"
+
+//dma shtuff
+#include "driverlib/udma.h"
+#include "inc/tm4c1294ncpdt.h"
+#pragma DATA_ALIGN(gDMAControlTable, 1024) // address alignment required
+tDMAControlTable gDMAControlTable[64]; // uDMA control table (global)
+
 #define PI 3.14159265358979
 #define NFFT 1024 // FFT length
 #define KISS_FFT_CFG_SIZE (sizeof(struct kiss_fft_state)+sizeof(kiss_fft_cpx)*(NFFT-1))
@@ -108,6 +115,29 @@ int main(void)
 
        count_unloaded = cpu_load_count();
 
+       //more dma shtuff
+       SysCtlPeripheralEnable(SYSCTL_PERIPH_UDMA);
+       uDMAEnable();
+       uDMAControlBaseSet(gDMAControlTable);
+       // assign DMA channel 24 to ADC1 sequence 0
+       uDMAChannelAssign(UDMA_CH24_ADC1_0);
+       uDMAChannelAttributeDisable(UDMA_SEC_CHANNEL_ADC10, UDMA_ATTR_ALL);
+       // primary DMA channel = first half of the ADC buffer
+       uDMAChannelControlSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT,
+       UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 |
+       UDMA_ARB_4);
+       uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT,
+       UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R,
+       (void*)&gADCBuffer[0], ADC_BUFFER_SIZE/2);
+       // alternate DMA channel = second half of the ADC buffer
+       uDMAChannelControlSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT,
+       UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 |
+       UDMA_ARB_4);
+       uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT,
+       UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R,
+       (void*)&gADCBuffer[ADC_BUFFER_SIZE/2],
+       ADC_BUFFER_SIZE/2);
+       uDMAChannelEnable(UDMA_SEC_CHANNEL_ADC10);
 
 
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
