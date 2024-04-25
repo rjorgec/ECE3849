@@ -7,7 +7,7 @@
         <srcFile name="package/cfg/rtos_pem4f.c"/>
     </sources>
     <configscripts>
-        <srcFile name="C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf/rtos.cfg"/>
+        <srcFile name="C:/Users/wtfolan/ece3849_lab5_rjcb_wtf/rtos.cfg"/>
     </configscripts>
     <makefiles>
         <srcFile name="package.mak" src="package.bld"/>
@@ -44,7 +44,7 @@
         isPartial="false"
         xCfgScript="package/cfg/rtos_pem4f.cfg"
         xCfgPrefix="package/cfg/rtos_pem4f"
-        cfgScript="C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf/rtos.cfg"
+        cfgScript="C:/Users/wtfolan/ece3849_lab5_rjcb_wtf/rtos.cfg"
         cfgArgs="null"
         />
     </configurations>
@@ -56,7 +56,7 @@
         profile="release"
         xCfgScript="package/cfg/rtos_pem4f.cfg"
         xCfgPrefix="package/cfg/rtos_pem4f"
-        cfgScript="C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf/rtos.cfg"
+        cfgScript="C:/Users/wtfolan/ece3849_lab5_rjcb_wtf/rtos.cfg"
         cfgArgs="null"
         />
     </executables>

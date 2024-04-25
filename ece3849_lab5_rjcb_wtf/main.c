@@ -73,12 +73,18 @@ int prevy;
 int y;
 int trigger;
 int voltsPerDiv = 4;
+int scalervalue = 1;
 float fVoltsPerDiv[] = {0.1, 0.2, 0.5, 1, 2};
 int tSlope = 1;
 float out_db[LCD_VERTICAL_MAX];
 uint32_t gPWMSample = 0; // PWM sample counter
 uint32_t gSamplingRateDivider  = 20; //CHECK IF NUMBER IS RIGHT (matters?)
 
+//implicit fixer
+void timerinputInit(void);
+void PWM2Init(void);
+void PWMAUDInit(void);
+void ADCInit(void);
 /*
  *  ======== main ========
  */
@@ -88,99 +94,47 @@ int main(void)
     IntMasterDisable();
 
     // hardware initialization goes here
-    // Enable the Floating Point Unit, and permit ISRs to use it
-       FPUEnable();
-       FPULazyStackingEnable();
+       // Enable the Floating Point Unit, and permit ISRs to use it
+          FPUEnable();
+          FPULazyStackingEnable();
 
-       // Initialize the system clock to 120 MHz
-       gSystemClock = SysCtlClockFreqSet(SYSCTL_XTAL_25MHZ | SYSCTL_OSC_MAIN | SYSCTL_USE_PLL | SYSCTL_CFG_VCO_480, 120000000);
+          // Initialize the system clock to 120 MHz
+          gSystemClock = SysCtlClockFreqSet(SYSCTL_XTAL_25MHZ | SYSCTL_OSC_MAIN | SYSCTL_USE_PLL | SYSCTL_CFG_VCO_480, 120000000);
 
-       // configure M0PWM2, at GPIO PF2, BoosterPack 1 header C1 pin 2
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-       GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_2);
-       GPIOPinConfigure(GPIO_PF2_M0PWM2);
-       GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
+          // initialize timer 3 in one-shot mode for polled timing
+          SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
+          TimerDisable(TIMER3_BASE, TIMER_BOTH);
+          TimerConfigure(TIMER3_BASE, TIMER_CFG_ONE_SHOT);
+          TimerLoadSet(TIMER3_BASE, TIMER_A, (gSystemClock - 1)/100); // 10 msec interval
 
-       //config GPIO PF3 somehow
-       GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_3);
-       GPIOPinConfigure(GPIO_PF3_M0PWM3);
-       GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
-       PWMPulseWidthSet(PWM0_BASE, PWM_OUT_3, roundf((float)gSystemClock/PWM_FREQUENCY*0.4f));
-       PWMOutputState(PWM0_BASE, PWM_OUT_3_BIT, true);
-       // config GPIO PD0 as timer input T0CCP0 at BoosterPack Connector #1 pin 14
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-       GPIOPinTypeTimer(GPIO_PORTD_BASE, GPIO_PIN_0);
-       GPIOPinConfigure(GPIO_PD0_T0CCP0);
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
-       TimerDisable(TIMER0_BASE, TIMER_BOTH);
-       TimerConfigure(TIMER0_BASE, TIMER_CFG_SPLIT_PAIR | TIMER_CFG_A_CAP_TIME_UP);
-       TimerControlEvent(TIMER0_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
-       // use maximum load value
-       TimerLoadSet(TIMER0_BASE, TIMER_A, 0xffff);
-       // use maximum prescale value
-       TimerPrescaleSet(TIMER0_BASE, TIMER_A, 0xff);
-       TimerIntEnable(TIMER0_BASE, TIMER_CAPA_EVENT);
-       TimerEnable(TIMER0_BASE, TIMER_A);
+          count_unloaded = cpu_load_count();
 
-       //PWM AUDIO CONFIG
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOG);
-       GPIOPinTypePWM(GPIO_PORTG_BASE, GPIO_PIN_1);
-       GPIOPinConfigure(GPIO_PG1_M0PWM5);
-       GPIOPadConfigSet(GPIO_PORTG_BASE, GPIO_PIN_1, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
-       PWMClockSet(PWM0_BASE, PWM_SYSCLK_DIV_1);
-       PWMGenConfigure(PWM0_BASE, PWM_GEN_2,PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
-       PWMGenPeriodSet(PWM0_BASE, PWM_GEN_2, AUD_PERIOD); //make aud period
-       PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5,AUD_PERIOD/2);
-       PWMOutputState(PWM0_BASE, PWM_OUT_5_BIT, true);
-       PWMGenEnable(PWM0_BASE, PWM_GEN_2);
-       PWMGenIntTrigEnable(PWM0_BASE, PWM_GEN_2, PWM_INT_CNT_ZERO);
-       gSamplingRateDivider  =  gSystemClock/AUD_PERIOD/AUDIO_SAMPLING_RATE;
-
-       // configure the PWM0 peripheral, gen 1, outputs 2 and 3
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
-       // use system clock without division
-       PWMClockSet(PWM0_BASE, PWM_SYSCLK_DIV_1);
-       PWMGenConfigure(PWM0_BASE, PWM_GEN_1,
-       PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
-       PWMGenPeriodSet(PWM0_BASE, PWM_GEN_1,
-       roundf((float)gSystemClock/PWM_FREQUENCY));
-       PWMPulseWidthSet(PWM0_BASE, PWM_OUT_2,
-       roundf((float)gSystemClock/PWM_FREQUENCY*0.4f));
-       PWMOutputState(PWM0_BASE, PWM_OUT_2_BIT, true);
-       PWMGenEnable(PWM0_BASE, PWM_GEN_1);
-
-       // initialize timer 3 in one-shot mode for polled timing
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER3);
-       TimerDisable(TIMER3_BASE, TIMER_BOTH);
-       TimerConfigure(TIMER3_BASE, TIMER_CFG_ONE_SHOT);
-       TimerLoadSet(TIMER3_BASE, TIMER_A, (gSystemClock - 1)/100); // 10 msec interval
-
-       count_unloaded = cpu_load_count();
-
-       //more dma shtuff
-       SysCtlPeripheralEnable(SYSCTL_PERIPH_UDMA);
-       uDMAEnable();
-       uDMAControlBaseSet(gDMAControlTable);
-       // assign DMA channel 24 to ADC1 sequence 0
-       uDMAChannelAssign(UDMA_CH24_ADC1_0);
-       uDMAChannelAttributeDisable(UDMA_SEC_CHANNEL_ADC10, UDMA_ATTR_ALL);
-       // primary DMA channel = first half of the ADC buffer
-       uDMAChannelControlSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT,
-       UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 |
-       UDMA_ARB_4);
-       uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT,
-       UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R,
-       (void*)&gADCBuffer[0], ADC_BUFFER_SIZE/2);
-       // alternate DMA channel = second half of the ADC buffer
-       uDMAChannelControlSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT,
-       UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 |
-       UDMA_ARB_4);
-       uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT,
-       UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R,
-       (void*)&gADCBuffer[ADC_BUFFER_SIZE/2],
-       ADC_BUFFER_SIZE/2);
-       uDMAChannelEnable(UDMA_SEC_CHANNEL_ADC10);
-
+          //more dma shtuff
+          SysCtlPeripheralEnable(SYSCTL_PERIPH_UDMA);
+          uDMAEnable();
+          uDMAControlBaseSet(gDMAControlTable);
+          // assign DMA channel 24 to ADC1 sequence 0
+          uDMAChannelAssign(UDMA_CH24_ADC1_0);
+          uDMAChannelAttributeDisable(UDMA_SEC_CHANNEL_ADC10, UDMA_ATTR_ALL);
+          // primary DMA channel = first half of the ADC buffer
+          uDMAChannelControlSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT,
+          UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 |
+          UDMA_ARB_4);
+          uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_PRI_SELECT,
+          UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R,
+          (void*)&gADCBuffer[0], ADC_BUFFER_SIZE/2);
+          // alternate DMA channel = second half of the ADC buffer
+          uDMAChannelControlSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT,
+          UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 |
+          UDMA_ARB_4);
+          uDMAChannelTransferSet(UDMA_SEC_CHANNEL_ADC10 | UDMA_ALT_SELECT,
+          UDMA_MODE_PINGPONG, (void*)&ADC1_SSFIFO0_R,
+          (void*)&gADCBuffer[ADC_BUFFER_SIZE/2],
+          ADC_BUFFER_SIZE/2);
+          uDMAChannelEnable(UDMA_SEC_CHANNEL_ADC10);
+    timerinputInit();
+    PWM2Init();
+    PWMAUDInit();
 
     Crystalfontz128x128_Init(); // Initialize the LCD display driver
     Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP); // set screen orientation
@@ -200,6 +154,62 @@ int main(void)
 
 
     return (0);
+}
+void timerinputInit(void){
+    // config GPIO PD0 as timer input T0CCP0 at BoosterPack Connector #1 pin 14
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    GPIOPinTypeTimer(GPIO_PORTD_BASE, GPIO_PIN_0);
+    GPIOPinConfigure(GPIO_PD0_T0CCP0);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+    TimerDisable(TIMER0_BASE, TIMER_BOTH);
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_SPLIT_PAIR | TIMER_CFG_A_CAP_TIME_UP);
+    TimerControlEvent(TIMER0_BASE, TIMER_A, TIMER_EVENT_POS_EDGE);
+    // use maximum load value
+    TimerLoadSet(TIMER0_BASE, TIMER_A, 0xffff);
+    // use maximum prescale value
+    TimerPrescaleSet(TIMER0_BASE, TIMER_A, 0xff);
+    TimerIntEnable(TIMER0_BASE, TIMER_CAPA_EVENT);
+    TimerEnable(TIMER0_BASE, TIMER_A);
+}
+void PWM2Init(void){
+    // configure M0PWM2, at GPIO PF2, BoosterPack 1 header C1 pin 2
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3);
+
+    GPIOPinConfigure(GPIO_PF3_M0PWM3); //NOT SURE IF THIS IS SUPPOSED TO EXIST
+
+    GPIOPinConfigure(GPIO_PF2_M0PWM2);
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
+
+
+    // configure the PWM0 peripheral, gen 1, outputs 2 and 3
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
+    // use system clock without division
+    PWMClockSet(PWM0_BASE, PWM_SYSCLK_DIV_1);
+    PWMGenConfigure(PWM0_BASE, PWM_GEN_1, PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+    PWMGenPeriodSet(PWM0_BASE, PWM_GEN_1, roundf((float)gSystemClock/PWM_FREQUENCY));
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_2, roundf((float)gSystemClock/PWM_FREQUENCY*0.4f));
+    PWMOutputState(PWM0_BASE, PWM_OUT_2_BIT | PWM_OUT_3_BIT, true);
+    PWMGenEnable(PWM0_BASE, PWM_GEN_1);
+
+}
+void PWMAUDInit(void){
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOG);
+        GPIOPinTypePWM(GPIO_PORTG_BASE, GPIO_PIN_1);
+        GPIOPinConfigure(GPIO_PG1_M0PWM5);
+        GPIOPadConfigSet(GPIO_PORTG_BASE, GPIO_PIN_1, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
+
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0); //possibly doubled
+
+        PWMClockSet(PWM0_BASE, PWM_SYSCLK_DIV_1);
+        PWMGenConfigure(PWM0_BASE, PWM_GEN_2,PWM_GEN_MODE_DOWN | PWM_GEN_MODE_NO_SYNC);
+        PWMGenPeriodSet(PWM0_BASE, PWM_GEN_2, AUD_PERIOD);
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_5,AUD_PERIOD/2);
+        PWMOutputState(PWM0_BASE, PWM_OUT_5_BIT, true);
+        PWMGenEnable(PWM0_BASE, PWM_GEN_2); //maybe doubled?
+        PWMGenIntTrigEnable(PWM0_BASE, PWM_GEN_2, PWM_INT_CNT_ZERO);
+        //calculate gSamplingRateDivider
+        gSamplingRateDivider =  gSystemClock/AUD_PERIOD/AUDIO_SAMPLING_RATE;
 }
 
 uint32_t cpu_load_count(void)
@@ -270,11 +280,20 @@ void processingtask(UArg arg1, UArg arg2){
 //        curry = curry+1;
         if (fftmode){
             for(curry = 0; curry < LCD_VERTICAL_MAX; curry++){
+
 //                for (i = 0; i < NFFT; i++) {
 //                // Blackman window
 //                w[i] = 0.42f - 0.5f * cosf(2*PI*i/(NFFT-1)) + 0.08f * cosf(4*PI*i/(NFFT-1));
 //                } //laggy af
+
+//                if (scalervalue == 0){
                 processbuff[curry] = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[curry] - ADC_OFFSET));
+//                }
+//                else{
+////                    for(i = 0; i< scalervalue; i++){
+//                        processbuff[curry] = LCD_VERTICAL_MAX/2 - (int)roundf(fScale * ((int)sampbuff[curry] - ADC_OFFSET));
+////                    }
+//                }
             }
         }
         else {
@@ -300,8 +319,7 @@ void displaytask(UArg arg1, UArg arg2){
     float freq;
     char printfreq[12];
     char printperiod[10];
-    count_loaded = cpu_load_count();
-    cpu_load = 1.0f - (float)count_loaded/count_unloaded; // compute CPU load
+    int i = 0;
 
 
 
@@ -309,6 +327,8 @@ void displaytask(UArg arg1, UArg arg2){
     const char * triglost[] = {"trigger not found"};
     while(1){
     Semaphore_pend(displayaphore, BIOS_WAIT_FOREVER);
+    count_loaded = cpu_load_count();
+    cpu_load = 1.0f - (float)count_loaded/count_unloaded; // compute CPU load
         GrContextForegroundSet(&sContext, ClrBlack);
         GrRectFill(&sContext, &rectFullScreen); // fill screen with black
         GrContextForegroundSet(&sContext, ClrBlue);
@@ -368,9 +388,16 @@ void displaytask(UArg arg1, UArg arg2){
             }
             GrContextForegroundSet(&sContext, ClrYellow);
             if (fftmode == 1){
-                for (curry = 0; curry< LCD_VERTICAL_MAX-1; curry++){
-                    GrLineDraw(&sContext, curry, processbuff[curry], curry+1, processbuff[curry+1]);
-
+                for (curry = 0; curry < LCD_VERTICAL_MAX - 1; curry++) {
+                    if (scalervalue == 0) {
+                        GrLineDraw(&sContext, curry, processbuff[curry], curry + 1, processbuff[curry + 1]);
+                    } else {
+                        // Draw a line segment from (curry, processbuff[curry]) to (curry + scalervalue, processbuff[curry + 1])
+                        int i;
+                        for (i = 0; i < scalervalue; i++) {
+                            GrLineDraw(&sContext, curry * scalervalue + i, processbuff[curry], (curry + 1) * scalervalue + i, processbuff[curry + 1]);
+                        }
+                    }
                 }
             }
             else{
@@ -385,11 +412,11 @@ void displaytask(UArg arg1, UArg arg2){
             freq = gSystemClock/period;
 
             snprintf(printfreq, sizeof(printfreq), "f = %05f Hz", freq);
-            GrStringDrawCentered(&sContext, printfreq, -1, 65, 110, false);
+            GrStringDrawCentered(&sContext, printfreq, -1, 65, 100, false);
 
 
             snprintf(printperiod, sizeof(printperiod), "T = %03u", period);
-            GrStringDrawCentered(&sContext, printperiod, -1, 65, 120, false); //guessed on location, may be scuffed, will fix
+            GrStringDrawCentered(&sContext, printperiod, -1, 65, 110, false); //guessed on location, may be scuffed, will fix
 
               GrFlush(&sContext); // flush the frame buffer to the LCD
               Semaphore_post(waveaphore);
@@ -400,10 +427,21 @@ void user_input(UArg arg1, UArg arg2){
     Mailbox_pend(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
         switch(buttmailbox){
             case 'w':
-                voltsPerDiv = voltsPerDiv + 1 > 4 ? 4 : voltsPerDiv + 1;
+                if (voltsPerDiv <4){
+                    voltsPerDiv = voltsPerDiv + 1;
+                }
+                else{
+                    voltsPerDiv = 0;
+                }
                 break;
             case 't':
-                voltsPerDiv = voltsPerDiv - 1 <= 0 ? 0 : voltsPerDiv - 1;
+                //implement horizontal scaling here. please. good luck today.
+                if (scalervalue < 4){
+                    scalervalue = scalervalue + 1;
+                }
+                else{
+                    scalervalue = 1;
+                }
                 break;
             case 'j':
                 fftmode = !fftmode;
@@ -412,6 +450,7 @@ void user_input(UArg arg1, UArg arg2){
                 PWMIntEnable(PWM0_BASE, PWM_INT_GEN_2);
                 break;
         }
+
 
     }
 }
@@ -460,11 +499,32 @@ void Buttontask(UArg arg1, UArg arg2) {
                    Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
                }
 
+//               if (gJoystick[0] > JOYSTICK_UPPER_PRESS_THRESHOLD){
+//                   presses |= 1 << 5; // joystick right in position 5
+//                   buttmailbox = 'r';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
+//               if (gJoystick[0] < JOYSTICK_UPPER_RELEASE_THRESHOLD){
+//                   presses &= ~(1 << 5);
+//                   buttmailbox = 'c';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
+//
+//               if (gJoystick[0] < JOYSTICK_LOWER_PRESS_THRESHOLD){
+//                   presses |= 1 << 6; // joystick left in position 6
+//                   buttmailbox = 'b';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
+//               if (gJoystick[0] > JOYSTICK_LOWER_RELEASE_THRESHOLD){
+//                   presses &= ~(1 << 6);
+//                   buttmailbox = 'z';
+//                   Mailbox_post(mailbox0, &buttmailbox, BIOS_WAIT_FOREVER);
+//               }
 
     }
 }
 
-void TimerISR(void){
+void TimerISR(UArg arg1){
     //clear flag
     TimerIntClear(TIMER0_BASE, TIMER_CAPA_EVENT);
 
@@ -473,7 +533,7 @@ void TimerISR(void){
     last_count = count;
 }
 
-void PWM_ISR(void) //no clue if the hwi i created for this is correct. I have 4 hwi. lab says i should have 3. scary
+void PWM_ISR(void) //no clue if the hwi i created for this is correct. scary
 {
     PWMGenIntClear(PWM0_BASE, PWM_GEN_2, PWM_INT_CNT_ZERO); // clear PWM interrupt flag
     // waveform sample index

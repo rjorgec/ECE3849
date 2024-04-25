@@ -5,7 +5,7 @@ digraph configuration {
     concentrate=true;
     compound=true;
     label="\nConfiguration for configPkg/rtos.xem4f"
-  node [font=Helvetica, fontsize=14, fontcolor=black];  subgraph cluster0 {label=""; __cfg [label="C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf/rtos.cfg", color=white, fontcolor=blue];
+  node [font=Helvetica, fontsize=14, fontcolor=black];  subgraph cluster0 {label=""; __cfg [label="C:/Users/wtfolan/ece3849_lab5_rjcb_wtf/rtos.cfg", color=white, fontcolor=blue];
     node [font=Helvetica, fontsize=10];    subgraph cluster1 {
         label="";
         xdc_services_global__top [shape=box,label="xdc.services.global\n1,0,0,0", color=white];

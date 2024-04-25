@@ -16,7 +16,7 @@ BIOS_INC  = -I"C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/"
 
 TARGET_INC = -I"C:/ti/tirtos_tivac_2_16_01_14/products/bios_6_45_02_31/packages/"
 
-INCS = $(BIOS_INC) $(TARGET_INC)  --include_path="C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf" --include_path="C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf" --include_path="C:/ti/tirtos_tivac_2_16_01_14/products/TivaWare_C_Series-2.1.1.71b" --include_path="C:/ti/ccs1200/ccs/tools/compiler/ti-cgt-arm_20.2.6.LTS/include" 
+INCS = $(BIOS_INC) $(TARGET_INC)  --include_path="C:/Users/wtfolan/ece3849_lab5_rjcb_wtf" --include_path="C:/Users/wtfolan/ece3849_lab5_rjcb_wtf" --include_path="C:/ti/tirtos_tivac_2_16_01_14/products/TivaWare_C_Series-2.1.1.71b" --include_path="C:/ti/ccs1200/ccs/tools/compiler/ti-cgt-arm_20.2.6.LTS/include" 
 
 CC = C:/ti/ccs1200/ccs/tools/compiler/ti-cgt-arm_20.2.6.LTS/bin/armcl -c $(CCOPTS) -I C:/ti/ccs1200/ccs/tools/compiler/ti-cgt-arm_20.2.6.LTS/include
 ASM = C:/ti/ccs1200/ccs/tools/compiler/ti-cgt-arm_20.2.6.LTS/bin/armcl -c $(CCOPTS) -I C:/ti/ccs1200/ccs/tools/compiler/ti-cgt-arm_20.2.6.LTS/include

@@ -11,7 +11,7 @@ var makeAssembly = false;
 var Executable = xdc.module('xdc.bld.Executable');
 
 var exeOpts = new Executable.Attrs({
-        cfgScript: 'C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf/rtos.cfg',
+        cfgScript: 'C:/Users/wtfolan/ece3849_lab5_rjcb_wtf/rtos.cfg',
         profile: 'release',
         cfgHome: 'configPkg',
 });
@@ -41,7 +41,7 @@ else {
 
 var thisObj = {
     cfg:        '../rtos.cfg',
-    outputPath: 'C:/Users/rjcroesball/Documents/3849reprj/ece3849_lab4_rjcroesball_wtfolan_4_18_FINITO.zip_expanded/ece3849_lab4_rjcb_wtf/Debug/configPkg',
+    outputPath: 'C:/Users/wtfolan/ece3849_lab5_rjcb_wtf/Debug/configPkg',
     exeName:    'rtos' + suffix,
     exeIntName: 'rtos' + suffix.replace('.', '_'),
     targ:       targ,
